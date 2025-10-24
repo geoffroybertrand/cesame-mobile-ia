@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -180,38 +182,44 @@ const ChatScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header with Menu */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => setSidebarVisible(true)} style={styles.menuButton}>
-          <Ionicons name="menu" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {currentWorkspace?.name || workspaceSlug}
-          </Text>
-        </View>
-
-        {isStreaming ? (
-          <TouchableOpacity onPress={handleStopGeneration} style={styles.stopButton}>
-            <Ionicons name="stop-circle" size={24} color={colors.danger} />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        {/* Header with Menu */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => setSidebarVisible(true)} style={styles.menuButton}>
+            <Ionicons name="menu" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-        ) : (
-          <View style={styles.stopButton} />
-        )}
-      </View>
 
-      {/* Messages */}
-      {isLoading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {currentWorkspace?.name || workspaceSlug}
+            </Text>
+          </View>
+
+          {isStreaming ? (
+            <TouchableOpacity onPress={handleStopGeneration} style={styles.stopButton}>
+              <Ionicons name="stop-circle" size={24} color={colors.danger} />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.stopButton} />
+          )}
         </View>
-      ) : (
-        <MessageList messages={displayMessages} isLoading={isStreaming && !currentStreamingMessage} />
-      )}
 
-      {/* Input */}
-      <ChatInput onSend={handleSendMessage} disabled={isStreaming} />
+        {/* Messages */}
+        {isLoading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" color={colors.accent} />
+          </View>
+        ) : (
+          <MessageList messages={displayMessages} isLoading={isStreaming && !currentStreamingMessage} />
+        )}
+
+        {/* Input */}
+        <ChatInput onSend={handleSendMessage} disabled={isStreaming} />
+      </KeyboardAvoidingView>
 
       {/* Sidebar */}
       <Sidebar

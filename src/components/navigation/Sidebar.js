@@ -35,6 +35,7 @@ const Sidebar = ({ visible, onClose, navigation, currentRoute }) => {
   const [creatingThread, setCreatingThread] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [slideAnim] = useState(new Animated.Value(-300));
+  const [userMenuSlideAnim] = useState(new Animated.Value(-500));
 
   useEffect(() => {
     if (visible) {
@@ -55,6 +56,24 @@ const Sidebar = ({ visible, onClose, navigation, currentRoute }) => {
       }).start();
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (showUserMenu) {
+      // Slide in user menu
+      Animated.timing(userMenuSlideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // Slide out user menu
+      Animated.timing(userMenuSlideAnim, {
+        toValue: -500,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showUserMenu]);
 
   const loadWorkspaces = async () => {
     try {
@@ -224,6 +243,7 @@ const Sidebar = ({ visible, onClose, navigation, currentRoute }) => {
   };
 
   return (
+    <>
     <Modal
       visible={visible}
       transparent
@@ -365,7 +385,10 @@ const Sidebar = ({ visible, onClose, navigation, currentRoute }) => {
               {/* User Info Button */}
               <TouchableOpacity
                 style={styles.userInfo}
-                onPress={() => setShowUserMenu(!showUserMenu)}
+                onPress={() => {
+                  onClose(); // Ferme la sidebar
+                  setTimeout(() => setShowUserMenu(true), 300); // Ouvre le menu après l'animation
+                }}
                 activeOpacity={0.7}
               >
                 <View style={styles.avatar}>
@@ -385,89 +408,147 @@ const Sidebar = ({ visible, onClose, navigation, currentRoute }) => {
                   </View>
                 </View>
                 <Ionicons
-                  name={showUserMenu ? "chevron-down" : "chevron-up"}
+                  name="chevron-forward"
                   size={20}
                   color={colors.textSecondary}
                 />
               </TouchableOpacity>
 
-              {/* User Menu Dropdown */}
-              {showUserMenu && (
-                <View style={styles.userMenuDropdown}>
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      Alert.alert('Compte', 'Gestion du compte');
-                      setShowUserMenu(false);
-                    }}
-                  >
-                    <Ionicons name="person-outline" size={18} color={colors.textPrimary} />
-                    <Text style={styles.menuItemText}>Compte</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      Alert.alert('Forfaits', 'Voir les forfaits disponibles');
-                      setShowUserMenu(false);
-                    }}
-                  >
-                    <Ionicons name="card-outline" size={18} color={colors.textPrimary} />
-                    <Text style={styles.menuItemText}>Forfaits</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      Alert.alert('Support', 'Contactez support@cesame.fr');
-                      setShowUserMenu(false);
-                    }}
-                  >
-                    <Ionicons name="help-circle-outline" size={18} color={colors.textPrimary} />
-                    <Text style={styles.menuItemText}>Support</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      Alert.alert('Confidentialité', 'Voir les CGU');
-                      setShowUserMenu(false);
-                    }}
-                  >
-                    <Ionicons name="shield-checkmark-outline" size={18} color={colors.textPrimary} />
-                    <Text style={styles.menuItemText}>Confidentialité et données</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      Alert.alert('Consultation', 'Réserver une consultation');
-                      setShowUserMenu(false);
-                    }}
-                  >
-                    <Ionicons name="calendar-outline" size={18} color={colors.textPrimary} />
-                    <Text style={styles.menuItemText}>Réserver une consultation</Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.menuDivider} />
-
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => {
-                      setShowUserMenu(false);
-                      handleLogout();
-                    }}
-                  >
-                    <Ionicons name="log-out-outline" size={18} color={colors.danger} />
-                    <Text style={[styles.menuItemText, { color: colors.danger }]}>Déconnexion</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
             </View>
           </SafeAreaView>
         </Animated.View>
       </View>
     </Modal>
+
+      {/* Full-Screen User Menu Modal */}
+      <Modal
+        visible={showUserMenu}
+        transparent
+        animationType="none"
+        onRequestClose={() => setShowUserMenu(false)}
+      >
+        <View style={styles.userMenuOverlay}>
+          {/* Background overlay */}
+          <TouchableWithoutFeedback onPress={() => setShowUserMenu(false)}>
+            <View style={styles.userMenuBackdrop} />
+          </TouchableWithoutFeedback>
+
+          {/* Full-screen user menu */}
+          <Animated.View
+            style={[
+              styles.userMenuFullScreen,
+              {
+                transform: [{ translateX: userMenuSlideAnim }],
+              },
+            ]}
+          >
+            <SafeAreaView style={styles.container} edges={['top', 'left']}>
+              {/* Header with back button */}
+              <View style={styles.userMenuHeader}>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => setShowUserMenu(false)}
+                >
+                  <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+                </TouchableOpacity>
+                <Text style={styles.userMenuTitle}>Menu</Text>
+              </View>
+
+              {/* User Info Display */}
+              <View style={styles.userInfoDisplay}>
+                <View style={styles.avatarLarge}>
+                  <Text style={styles.avatarTextLarge}>
+                    {user?.username?.slice(0, 2)?.toUpperCase() || 'AA'}
+                  </Text>
+                </View>
+                <Text style={styles.userNameLarge}>
+                  {user?.username || 'Utilisateur'}
+                </Text>
+                <View style={styles.planBadgeLarge}>
+                  <Text style={styles.planBadgeTextLarge}>Forfait Gratuit</Text>
+                </View>
+              </View>
+
+              {/* Menu Items */}
+              <ScrollView style={styles.userMenuList}>
+                <TouchableOpacity
+                  style={styles.userMenuItem}
+                  onPress={() => {
+                    Alert.alert('Compte', 'Gestion du compte');
+                    setShowUserMenu(false);
+                  }}
+                >
+                  <Ionicons name="person-outline" size={22} color={colors.textPrimary} />
+                  <Text style={styles.userMenuItemText}>Compte</Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.userMenuItem}
+                  onPress={() => {
+                    Alert.alert('Forfaits', 'Voir les forfaits disponibles');
+                    setShowUserMenu(false);
+                  }}
+                >
+                  <Ionicons name="card-outline" size={22} color={colors.textPrimary} />
+                  <Text style={styles.userMenuItemText}>Forfaits</Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.userMenuItem}
+                  onPress={() => {
+                    Alert.alert('Support', 'Contactez support@cesame.fr');
+                    setShowUserMenu(false);
+                  }}
+                >
+                  <Ionicons name="help-circle-outline" size={22} color={colors.textPrimary} />
+                  <Text style={styles.userMenuItemText}>Support</Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.userMenuItem}
+                  onPress={() => {
+                    Alert.alert('Confidentialité', 'Voir les CGU');
+                    setShowUserMenu(false);
+                  }}
+                >
+                  <Ionicons name="shield-checkmark-outline" size={22} color={colors.textPrimary} />
+                  <Text style={styles.userMenuItemText}>Confidentialité et données</Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.userMenuItem}
+                  onPress={() => {
+                    Alert.alert('Consultation', 'Réserver une consultation');
+                    setShowUserMenu(false);
+                  }}
+                >
+                  <Ionicons name="calendar-outline" size={22} color={colors.textPrimary} />
+                  <Text style={styles.userMenuItemText}>Réserver une consultation</Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+
+                <View style={styles.userMenuDivider} />
+
+                <TouchableOpacity
+                  style={styles.userMenuItem}
+                  onPress={() => {
+                    setShowUserMenu(false);
+                    handleLogout();
+                  }}
+                >
+                  <Ionicons name="log-out-outline" size={22} color={colors.danger} />
+                  <Text style={[styles.userMenuItemText, { color: colors.danger }]}>Déconnexion</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </SafeAreaView>
+          </Animated.View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
@@ -606,13 +687,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.medium,
     ...shadows.subtle,
   },
-  userMenuDropdown: {
-    backgroundColor: colors.inputBg,
-    borderRadius: borderRadius.medium,
-    padding: spacing.xs,
-    marginBottom: spacing.md,
-    ...shadows.card,
-  },
   avatar: {
     width: 40,
     height: 40,
@@ -675,6 +749,117 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginVertical: spacing.xs,
+    marginHorizontal: spacing.sm,
+  },
+  // Full-screen user menu styles
+  userMenuOverlay: {
+    flex: 1,
+    position: 'relative',
+  },
+  userMenuBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  userMenuFullScreen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: colors.bgPrimary,
+    elevation: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  userMenuHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backButton: {
+    padding: spacing.sm,
+    marginRight: spacing.md,
+  },
+  userMenuTitle: {
+    fontFamily: typography.fontFamily.bold,
+    fontSize: typography.sizes.h3,
+    color: colors.textPrimary,
+  },
+  userInfoDisplay: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  avatarLarge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  avatarTextLarge: {
+    fontFamily: typography.fontFamily.bold,
+    fontSize: 32,
+    color: '#FFFFFF',
+  },
+  userNameLarge: {
+    fontFamily: typography.fontFamily.bold,
+    fontSize: typography.sizes.h3,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  planBadgeLarge: {
+    backgroundColor: colors.accentLight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.medium,
+  },
+  planBadgeTextLarge: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.sizes.body,
+    color: colors.accent,
+  },
+  userMenuList: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+  },
+  userMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.medium,
+    backgroundColor: colors.inputBg,
+    marginBottom: spacing.sm,
+    ...shadows.subtle,
+  },
+  userMenuItemText: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.sizes.h5,
+    color: colors.textPrimary,
+    marginLeft: spacing.md,
+    flex: 1,
+  },
+  userMenuDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.md,
     marginHorizontal: spacing.sm,
   },
 });

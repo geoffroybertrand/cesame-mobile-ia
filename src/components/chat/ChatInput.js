@@ -8,8 +8,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, borderRadius, shadows, spacing } from '../../styles/theme';
@@ -25,36 +23,31 @@ const ChatInput = ({ onSend, disabled = false }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
-      <View style={styles.container}>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Posez votre question..."
-            placeholderTextColor={colors.textPlaceholder}
-            value={message}
-            onChangeText={setMessage}
-            multiline
-            maxLength={2000}
-            editable={!disabled}
+    <View style={styles.container}>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Posez votre question..."
+          placeholderTextColor={colors.textPlaceholder}
+          value={message}
+          onChangeText={setMessage}
+          multiline
+          maxLength={2000}
+          editable={!disabled}
+        />
+        <TouchableOpacity
+          style={[styles.sendButton, disabled && styles.sendButtonDisabled]}
+          onPress={handleSend}
+          disabled={disabled || !message.trim()}
+        >
+          <Ionicons
+            name="send"
+            size={20}
+            color={message.trim() && !disabled ? colors.accent : colors.textPlaceholder}
           />
-          <TouchableOpacity
-            style={[styles.sendButton, disabled && styles.sendButtonDisabled]}
-            onPress={handleSend}
-            disabled={disabled || !message.trim()}
-          >
-            <Ionicons
-              name="send"
-              size={20}
-              color={message.trim() && !disabled ? colors.accent : colors.textPlaceholder}
-            />
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
