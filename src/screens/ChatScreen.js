@@ -90,12 +90,13 @@ const ChatScreen = ({ route, navigation }) => {
     }
   };
 
-  const handleSendMessage = async (messageText) => {
+  const handleSendMessage = async (messageText, attachments = []) => {
     // Add user message immediately
     const userMessage = {
       id: `user-${Date.now()}`,
       type: 'user',
       prompt: messageText,
+      attachments: attachments,
       createdAt: new Date().toISOString(),
     };
 
@@ -151,7 +152,8 @@ const ChatScreen = ({ route, navigation }) => {
             setIsStreaming(false);
           },
           signal: abortControllerRef.current.signal,
-        }
+        },
+        attachments
       );
     } catch (error) {
       console.error('Error sending message:', error);
@@ -218,7 +220,12 @@ const ChatScreen = ({ route, navigation }) => {
         )}
 
         {/* Input */}
-        <ChatInput onSend={handleSendMessage} disabled={isStreaming} />
+        <ChatInput
+          onSend={handleSendMessage}
+          disabled={isStreaming}
+          messagesRemaining={45}
+          isUnlimited={false}
+        />
       </KeyboardAvoidingView>
 
       {/* Sidebar */}
