@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "CESAME Agent IA",
+    "slug": "cesame-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF6F1"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cesame.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FAF6F1"
+      },
+      "package": "com.cesame.mobile"
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "apiBaseUrl": "http://192.168.0.43:3001/api"
+    }
+  }
+}

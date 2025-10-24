@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-expo-app@latest . --template blank --no-install)",
+      "Bash(chmod +x /Users/geoff/Desktop/CESAME/Projets/cesame-mobile/test-api.js)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
