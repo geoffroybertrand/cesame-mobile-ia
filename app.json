@@ -4,32 +4,30 @@
     "slug": "cesame-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FAF6F1"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cesame.mobile"
+      "bundleIdentifier": "com.cesame.mobile",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Cette application a besoin d'accéder au microphone pour la dictée vocale."
+      }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FAF6F1"
-      },
-      "package": "com.cesame.mobile"
+      "package": "com.cesame.mobile",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-dev-client"
     ],
     "extra": {
-      "apiBaseUrl": "http://192.168.0.43:3001/api"
+      "apiBaseUrl": "http://localhost:3001/api",
+      "whisperServerUrl": "http://localhost:3002"
     }
   }
 }
