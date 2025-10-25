@@ -30,3 +30,10 @@ yarn-error.log*
 # Reference code (ne pas commit)
 _reference/
 
+# Whisper Models (fichiers lourds - ne pas commit)
+assets/models/
+*.bin
+*.ggml
+*.pt
+*.onnx
+
