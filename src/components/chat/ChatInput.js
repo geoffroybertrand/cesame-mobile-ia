@@ -11,19 +11,19 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { Audio } from 'expo-av';
+import * as IntentLauncher from 'expo-intent-launcher';
 import SlashCommandsMenu from './SlashCommandsMenu';
 import { colors, typography, borderRadius, shadows, spacing } from '../../styles/theme';
 
 const ChatInput = ({ onSend, disabled = false, messagesRemaining = null, isUnlimited = false }) => {
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState([]);
-  const [isRecording, setIsRecording] = useState(false);
   const [showSlashCommands, setShowSlashCommands] = useState(false);
-  const recordingRef = useRef(null);
+  const [isRecordingActive, setIsRecordingActive] = useState(false);
 
   const handleSend = () => {
     if (message.trim() && !disabled) {
@@ -63,61 +63,80 @@ const ChatInput = ({ onSend, disabled = false, messagesRemaining = null, isUnlim
   };
 
   const handleSpeechToText = async () => {
-    if (isRecording) {
-      // Stop recording
+    // Empêcher les clics multiples
+    if (isRecordingActive) {
+      console.log('Speech recognition already active, ignoring click');
+      return;
+    }
+
+    if (Platform.OS === 'android') {
+      setIsRecordingActive(true);
       try {
-        await recordingRef.current.stopAndUnloadAsync();
-        const uri = recordingRef.current.getURI();
-        console.log('Recording saved to:', uri);
-
-        setIsRecording(false);
-
-        // TODO: Envoyer l'audio à un service de transcription (OpenAI Whisper, etc.)
-        Alert.alert(
-          'Transcription',
-          'La transcription audio nécessite un service backend. Fichier audio enregistré à: ' + uri,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // Pour le moment, ajouter un texte de démo
-                setMessage(message + ' [Audio transcrit ici]');
-              }
-            }
-          ]
+        // Lancer l'Intent de reconnaissance vocale native d'Android
+        const result = await IntentLauncher.startActivityAsync(
+          'android.speech.action.RECOGNIZE_SPEECH',
+          {
+            extra: {
+              'android.speech.extra.LANGUAGE_MODEL': 'free_form',
+              'android.speech.extra.LANGUAGE': 'fr-FR',
+              'android.speech.extra.PROMPT': 'Parlez maintenant...',
+              'android.speech.extra.MAX_RESULTS': 5,
+              'android.speech.extra.PARTIAL_RESULTS': true,
+              'android.speech.extra.PREFER_OFFLINE': true, // Utiliser modèle local si disponible
+              'android.speech.extra.SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS': 3000, // 3 secondes de silence
+              'android.speech.extra.SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS': 3000,
+            },
+          }
         );
+
+        // Débugger le résultat complet
+        console.log('Intent result:', JSON.stringify(result, null, 2));
+        console.log('Result code:', result.resultCode);
+        console.log('Result data:', result.data);
+
+        // Récupérer le texte reconnu
+        // result.resultCode -1 = Success sur Android
+        if (result.resultCode === -1 || result.resultCode === IntentLauncher.ResultCode.Success) {
+          console.log('Success! Looking for results...');
+
+          // Les résultats sont dans result.extra, pas result.data !
+          const matches = result.extra?.['android.speech.extra.RESULTS'];
+
+          console.log('Matches found:', matches);
+
+          if (matches && matches.length > 0) {
+            const spokenText = matches[0];
+            console.log('Spoken text:', spokenText);
+
+            // Ajouter le texte au message existant
+            const newMessage = message + (message ? ' ' : '') + spokenText;
+            console.log('Setting new message:', newMessage);
+            setMessage(newMessage);
+          } else {
+            console.log('No matches found in result.extra');
+          }
+        } else if (result.resultCode === IntentLauncher.ResultCode.Canceled || result.resultCode === 0) {
+          // L'utilisateur a annulé
+          console.log('Speech recognition canceled');
+        } else {
+          console.log('Unknown result code:', result.resultCode);
+        }
       } catch (error) {
-        console.error('Error stopping recording:', error);
-        Alert.alert('Erreur', 'Impossible d\'arrêter l\'enregistrement');
-        setIsRecording(false);
+        console.error('Speech recognition error:', error);
+        Alert.alert(
+          'Erreur',
+          'Impossible de lancer la reconnaissance vocale. Assurez-vous que Google Voice est installé.'
+        );
+      } finally {
+        // Toujours réinitialiser l'état
+        setIsRecordingActive(false);
       }
     } else {
-      // Start recording
-      try {
-        // Demander permission
-        const permission = await Audio.requestPermissionsAsync();
-        if (!permission.granted) {
-          Alert.alert('Permission refusée', 'Accès au microphone refusé');
-          return;
-        }
-
-        // Configurer l'audio
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
-
-        // Démarrer l'enregistrement
-        const { recording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY
-        );
-
-        recordingRef.current = recording;
-        setIsRecording(true);
-      } catch (error) {
-        console.error('Error starting recording:', error);
-        Alert.alert('Erreur', 'Impossible de démarrer l\'enregistrement');
-      }
+      // Pour iOS, on pourrait implémenter une solution différente
+      Alert.alert(
+        'Non disponible',
+        'La reconnaissance vocale n\'est disponible que sur Android pour le moment.'
+      );
     }
   };
 
@@ -234,12 +253,12 @@ const ChatInput = ({ onSend, disabled = false, messagesRemaining = null, isUnlim
             <TouchableOpacity
               style={styles.toolbarButton}
               onPress={handleSpeechToText}
-              disabled={disabled}
+              disabled={disabled || isRecordingActive}
             >
               <Ionicons
-                name={isRecording ? "mic" : "mic-outline"}
+                name="mic-outline"
                 size={20}
-                color={isRecording ? colors.danger : colors.textSecondary}
+                color={isRecordingActive ? colors.accent : colors.textSecondary}
               />
             </TouchableOpacity>
 
