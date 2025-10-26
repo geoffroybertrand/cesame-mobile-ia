@@ -27,7 +27,7 @@
     ],
     "extra": {
       "apiBaseUrl": "http://localhost:3001/api",
-      "whisperServerUrl": "http://localhost:3002"
+      "whisperServerUrl": "http://localhost:3003"
     }
   }
 }
